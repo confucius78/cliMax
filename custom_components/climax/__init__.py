@@ -1,13 +1,14 @@
 """The Climax integration."""
 from __future__ import annotations
+import asyncio
+import logging
 
-from .logic import ClimaxZone
-
-from homeassistant.core import HomeAssistant
-from homeassistant.const import Platform
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .const import DOMAIN, STARTUP_MESSAGE
+from .logic import ClimaxZone
 
 PLATFORMS = [Platform.CLIMATE, Platform.SENSOR]
 entity_list_current_temperature = [
@@ -27,13 +28,23 @@ ac_climate_entities = [
     "climate.ac_kitchen",
 ]
 
+_LOGGER: logging.Logger = logging.getLogger(__package__)
+
+
+async def async_setup(hass: HomeAssistant, config: Config):
+    """Set up this integration using YAML is not supported."""
+    return True
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Create climax zone component."""
+    """Create climax zone component from UI"""
+
+    # Log startup message and set defaults
+    if hass.data.get(DOMAIN) is None:
+        hass.data.setdefault(DOMAIN, {})
+        _LOGGER.info(STARTUP_MESSAGE)
+
     conf = entry.data
-    # For backwards compat, set unique ID
-    if entry.unique_id is None or ".local" in entry.unique_id:
-        hass.config_entries.async_update_entry(entry, unique_id="climax123")
 
     this_climax_zone = ClimaxZone(
         hass,
@@ -46,6 +57,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {}).update({entry.entry_id: this_climax_zone})
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    _LOGGER.info(LOADED_MESSAGE)
     return True
 
 

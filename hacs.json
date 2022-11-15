@@ -1,6 +1,6 @@
 {
     "name": "Climax combined climate control",
-    "hacs": "0.0.01",
+    "hacs": "0.0.02",
     "domains": [
         "climate",
         "sensor",

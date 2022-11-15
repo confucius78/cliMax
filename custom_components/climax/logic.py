@@ -195,7 +195,9 @@ class ClimaxZone:
         else:
             return self._attr_current_temperature
 
-    async def _async_update_current_temperature(self, event):
+    async def _async_update_current_temperature(
+        self, event
+    ):  # pylint: disable=unused-argument
         """Handle temperature changes."""
 
         self._update_current_temperature(None)
@@ -205,7 +207,7 @@ class ClimaxZone:
 
         self.update_pid()
 
-    def _update_current_temperature(self, event):
+    def _update_current_temperature(self, event):  # pylint: disable=unused-argument
         _current_temp = 0.0
         _max_error_index = 0
         _errors = list()
@@ -223,7 +225,7 @@ class ClimaxZone:
             for _idx, _entity in enumerate(_temp_entities):
                 try:
                     _values.append(float(self._hass.states.get(_entity).state))
-                except:
+                except Exception:  # pylint: disable=broad-except
                     _temp_entities.pop(_idx)
                     _values.append(20.0)
 
@@ -287,9 +289,9 @@ class ClimaxZone:
         time_constant = 8.0
 
         # proportional filtered error
-        A = 1 / time_constant
-        B = 1.0 - A
-        self._climate_error = last_error * B + new_error * A
+        _a = 1 / time_constant
+        _b = 1.0 - _a
+        self._climate_error = last_error * _b + new_error * _a
 
         # Derivative, spans n minutes
         self._derivative_history.pop(0)
@@ -314,7 +316,9 @@ class ClimaxZone:
 
         self.update_pid()
 
-    async def _outside_temp_update_average(self, event):
+    async def _outside_temp_update_average(
+        self, event
+    ):  # pylint: disable=unused-argument
         """Update outdoor temperature average"""
         start = dt_util.as_utc(dt_util.now() - dt_util.parse_duration("24:00:00"))
         end = dt_util.as_utc(dt_util.now())
@@ -374,7 +378,7 @@ class ClimaxZone:
         """Return current HVAC action"""
         return self._climate_devices_action
 
-    async def _update_climate_state(self, event):
+    async def _update_climate_state(self, event):  # pylint: disable=unused-argument
         """Update current climate action of controlled devices"""
 
         # Set default state
@@ -398,10 +402,10 @@ class ClimaxZone:
                         "hvac_action"
                     ]
 
-    async def _update_climate_mode(self, event):
+    async def _update_climate_mode(self, event):  # pylint: disable=unused-argument
         """Update current climate mode of controlled devices"""
 
-        self._climate_mode == HVACMode.OFF
+        self._climate_mode = HVACMode.OFF
 
         if self._attr_1d_outdoor_temperature is not None:
             if (
@@ -415,7 +419,7 @@ class ClimaxZone:
             ):
                 self._climate_mode = HVACMode.HEAT
 
-    async def _control_climate_devices(self, event):
+    async def _control_climate_devices(self, event):  # pylint: disable=unused-argument
         """Update current climate action of controlled devices"""
 
         # Loop controlled climate devices

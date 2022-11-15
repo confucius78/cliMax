@@ -5,3 +5,6 @@
 DOMAIN = "climax"
 
 CLIMATE_DOMAIN = "climate"
+
+STARTUP_MESSAGE = "Climax is loading"
+LOADED_MESSAGE = "Climax has loaded"
