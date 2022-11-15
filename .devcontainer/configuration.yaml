@@ -1,9 +1,267 @@
+
+# Loads default set of integrations. Do not remove.
 default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+climate:
+  platform: climax
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+template:
+  - trigger:
+    - platform: time_pattern
+      minutes: /1
+    sensor:
+    - unique_id: weather_station_temperature
+      name: "weather_station_temperature"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(20.0 + (now().minute % 2 / 10) | float) | round(3)}}
+    - unique_id: living_room_back_temperature_2
+      name: "living_room_back_temperature_2"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(20.0 - 1.0 / 5.0 + (now().minute % 2 / 6) | float) | round(3)}}
+    - unique_id: living_room_l_temperature
+      name: "living_room_l_temperature"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(20.0 + (now().minute % 2 / 9) | float) | round(3)}}
+    - unique_id: living_room_r_temperature
+      name: "living_room_r_temperature"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(20.0 - 1.0 / 5.0 + (now().minute % 2 / 3) | float) | round(3)}}
+    - unique_id: play_area_table_ht_temperature
+      name: "play_area_table_ht_temperature"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(20.0 + (now().minute % 2 / 4) | float) | round(3)}}
+    - unique_id: living_room_window_back_temperature
+      name: "living_room_window_back_temperature"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(21.0 - 2.0 / 3.0 + (now().minute % 2 / 3) | float) | round(3)}}
+    - unique_id: kitchen_back_ht_temperature
+      name: "kitchen_back_ht_temperature"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(22.0 - 2.0 / 5.0 + (now().minute % 2 / 3) | float) | round(3)}}
+    - unique_id: kitchen_front_ht_temperature
+      name: "kitchen_front_ht_temperature"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(18.0 - 1.0 / 5.0 + (now().minute % 2 / 3) | float) | round(3)}}
+    - unique_id: kitchen_temp_mid
+      name: "kitchen_temp_mid"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(19.0 - 1.0 / 3.0 + (now().minute % 2 / 3) | float) | round(3)}}
+    - unique_id: kitchen_temp_back
+      name: "kitchen_temp_back"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(20.0 - 1.0 / 11.0 + (now().minute % 2 / 3) | float) | round(3)}}
+    - unique_id: kitchen_temp_front_temperature
+      name: "kitchen_temp_front_temperature"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(10.0 - 1.0 / 3.0 + (now().minute % 2 / 3) | float) | round(3)}}
+    - unique_id: average_outside_temperature_5m_sampled
+      name: "average_outside_temperature_5m_sampled"
+      unit_of_measurement: °C
+      availability: true
+      state: >
+        {{(25.0 - 1.0 / 3.0 + (now().minute % 2 / 3) | float) | round(3)}}
+
+    - unique_id: average_temp_groundfloor
+      name: "Average temp groundfloor"
+      state_class: measurement
+      device_class: temperature
+      unit_of_measurement: '°C'
+      availability: true
+      state: >
+          {%set entities = namespace(id=[
+              'sensor.weather_station_temperature' ,
+              'sensor.living_room_back_temperature_2' ,
+              'sensor.living_room_l_temperature' ,
+              'sensor.living_room_r_temperature' ,
+              'sensor.living_room_window_back_temperature' ,
+              'sensor.kitchen_temp_mid' ,
+              'sensor.kitchen_temp_back' ,
+              'sensor.kitchen_temp_front_temperature'
+          ],values=[],variance=[])%}
+          {%set exclusions = namespace(id=[])%}
+          {%set items = entities.id%}
+
+          {% set templist = namespace(numbers=[]) %}
+          {%for item in items%}
+            {% set templist.numbers = templist.numbers + [states(item) | float] %}
+          {%endfor%}
+          {% set entities.values = templist.numbers%}
+
+          {%for outerloop in entities.id%}
+            {%set items = entities.id%}
+            {% set templist.numbers =  [] %}
+            {%for item in items%}
+              {% set templist.numbers = templist.numbers + [((entities.values[loop.index - 1] | float-average(entities.values))**2) | float]%}
+            {%endfor%}
+            {% set entities.variance = templist.numbers%}
+
+            {%set var = sqrt(entities.variance | sum | float / (entities.id | count - 1)) %}
+            {%set avg = entities.values | average %}
+            {%set maxdev = entities.variance.index(entities.variance | max)%}
+            {% if ((entities.values[maxdev] - avg) | abs > (var * states('input_number.sigma_level_temp_measurements') | float /2)) %}
+              {%set exclusions.id = exclusions.id + [entities.id[maxdev]]%}
+              {%set temp = entities.id.pop(maxdev)%}
+              {%set temp = entities.values.pop(maxdev)%}
+              {%set temp = entities.variance.pop(maxdev)%}
+            {%endif%}
+          {%endfor%}
+          {{"%.3f" | format(entities.values | average)}}
+      attributes:
+            sigma: >
+                {%set entities = namespace(id=[
+                    'sensor.weather_station_temperature' ,
+                    'sensor.living_room_back_temperature_2' ,
+                    'sensor.living_room_l_temperature' ,
+                    'sensor.living_room_r_temperature' ,
+                    'sensor.living_room_window_back_temperature' ,
+                    'sensor.kitchen_temp_mid' ,
+                    'sensor.kitchen_temp_back' ,
+                    'sensor.kitchen_temp_front_temperature'
+                ],values=[],variance=[])%}
+                {%set exclusions = namespace(id=[])%}
+                {%set items = entities.id%}
+
+                {% set templist = namespace(numbers=[]) %}
+                {%for item in items%}
+                  {% set templist.numbers = templist.numbers + [states(item) | float] %}
+                {%endfor%}
+                {% set entities.values = templist.numbers%}
+
+                {%for outerloop in entities.id%}
+                  {%set items = entities.id%}
+                  {% set templist.numbers =  [] %}
+                  {%for item in items%}
+                    {% set templist.numbers = templist.numbers + [((entities.values[loop.index - 1] | float-average(entities.values))**2) | float]%}
+                  {%endfor%}
+                  {% set entities.variance = templist.numbers%}
+
+                  {%set var = sqrt(entities.variance | sum | float / (entities.id | count - 1)) %}
+                  {%set avg = entities.values | average %}
+                  {%set maxdev = entities.variance.index(entities.variance | max)%}
+                  {% if ((entities.values[maxdev] - avg) | abs > (var * states('input_number.sigma_level_temp_measurements') | float /2)) %}
+                    {%set exclusions.id = exclusions.id + [entities.id[maxdev]]%}
+                    {%set temp = entities.id.pop(maxdev)%}
+                    {%set temp = entities.values.pop(maxdev)%}
+                    {%set temp = entities.variance.pop(maxdev)%}
+                  {%endif%}
+                {%endfor%}
+                {{sqrt(entities.variance | sum | float / (entities.id | count - 1))}}
+            excluded: >
+                {%set entities = namespace(id=[
+                    'sensor.weather_station_temperature' ,
+                    'sensor.living_room_back_temperature_2' ,
+                    'sensor.living_room_l_temperature' ,
+                    'sensor.living_room_r_temperature' ,
+                    'sensor.living_room_window_back_temperature' ,
+                    'sensor.kitchen_temp_mid' ,
+                    'sensor.kitchen_temp_back' ,
+                    'sensor.kitchen_temp_front_temperature'
+                ],values=[],variance=[])%}
+                {%set exclusions = namespace(id=[])%}
+                {%set items = entities.id%}
+
+                {% set templist = namespace(numbers=[]) %}
+                {%for item in items%}
+                  {% set templist.numbers = templist.numbers + [states(item) | float] %}
+                {%endfor%}
+                {% set entities.values = templist.numbers%}
+
+                {%for outerloop in entities.id%}
+                  {%set items = entities.id%}
+                  {% set templist.numbers =  [] %}
+                  {%for item in items%}
+                    {% set templist.numbers = templist.numbers + [((entities.values[loop.index - 1] | float-average(entities.values))**2) | float]%}
+                  {%endfor%}
+                  {% set entities.variance = templist.numbers%}
+
+                  {%set var = sqrt(entities.variance | sum | float / (entities.id | count - 1)) %}
+                  {%set avg = entities.values | average %}
+                  {%set maxdev = entities.variance.index(entities.variance | max)%}
+                  {% if ((entities.values[maxdev] - avg) | abs > (var * states('input_number.sigma_level_temp_measurements') | float /2)) %}
+                    {%set exclusions.id = exclusions.id + [entities.id[maxdev]]%}
+                    {%set temp = entities.id.pop(maxdev)%}
+                    {%set temp = entities.values.pop(maxdev)%}
+                    {%set temp = entities.variance.pop(maxdev)%}
+                  {%endif%}
+                {%endfor%}
+                {{exclusions.id
+                | replace("'sensor.","\n- ")
+                | replace("'","")
+                | replace(",","")
+                | replace("[","")
+                | replace("]","")}}
+            excluded_count: >
+                {%set entities = namespace(id=[
+                    'sensor.weather_station_temperature' ,
+                    'sensor.living_room_back_temperature_2' ,
+                    'sensor.living_room_l_temperature' ,
+                    'sensor.living_room_r_temperature' ,
+                    'sensor.living_room_window_back_temperature' ,
+                    'sensor.kitchen_temp_mid' ,
+                    'sensor.kitchen_temp_back' ,
+                    'sensor.kitchen_temp_front_temperature'
+                ],values=[],variance=[])%}
+                {%set exclusions = namespace(id=[])%}
+                {%set items = entities.id%}
+
+                {% set templist = namespace(numbers=[]) %}
+                {%for item in items%}
+                  {% set templist.numbers = templist.numbers + [states(item) | float] %}
+                {%endfor%}
+                {% set entities.values = templist.numbers%}
+
+                {%for outerloop in entities.id%}
+                  {%set items = entities.id%}
+                  {% set templist.numbers =  [] %}
+                  {%for item in items%}
+                    {% set templist.numbers = templist.numbers + [((entities.values[loop.index - 1] | float-average(entities.values))**2) | float]%}
+                  {%endfor%}
+                  {% set entities.variance = templist.numbers%}
+
+                  {%set var = sqrt(entities.variance | sum | float / (entities.id | count - 1)) %}
+                  {%set avg = entities.values | average %}
+                  {%set maxdev = entities.variance.index(entities.variance | max)%}
+                  {% if ((entities.values[maxdev] - avg) | abs > (var * states('input_number.sigma_level_temp_measurements') | float /2)) %}
+                    {%set exclusions.id = exclusions.id + [entities.id[maxdev]]%}
+                    {%set temp = entities.id.pop(maxdev)%}
+                    {%set temp = entities.values.pop(maxdev)%}
+                    {%set temp = entities.variance.pop(maxdev)%}
+                  {%endif%}
+                {%endfor%}
+                {{exclusions.id | count}}
 
 logger:
   default: info
   logs:
-    custom_components.integration_blueprint: debug
+    homeassistant.components.cloud: debug
 
-# If you need to debug uncomment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
-# debugpy:
