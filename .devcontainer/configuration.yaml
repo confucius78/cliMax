@@ -89,7 +89,7 @@ template:
       unit_of_measurement: °C
       availability: true
       state: >
-        {{(25.0 - 1.0 / 3.0 + (now().minute % 2 / 3) | float) | round(3)}}
+        {{(5.0 - 1.0 / 3.0 + (now().minute % 2 / 3) | float) | round(3)}}
 
     - unique_id: average_temp_groundfloor
       name: "Average temp groundfloor"
