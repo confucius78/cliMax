@@ -265,3 +265,4 @@ logger:
   logs:
     homeassistant.components.cloud: debug
 
+debugpy:
