@@ -11,6 +11,7 @@ from homeassistant.components.recorder import get_instance, history
 from homeassistant.helpers.event import (
     async_track_time_interval,
 )
+from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.const import (
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
@@ -43,6 +44,9 @@ class ClimaxZone:
         self._id = zoneid
         self._name = zoneid
         self._hass = hass
+
+        # Entities
+        self._main_thermostat = None
 
         self._climate_devices = climate_ac_entities
         self._climate_mode = HVACMode.OFF
@@ -117,6 +121,21 @@ class ClimaxZone:
             self._control_climate_devices,
             self._sample_time,
         )
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        try:
+            return True
+        except Exception as exception:
+            raise UpdateFailed() from exception
+
+    async def async_refresh(self):
+        """Refresh data"""
+
+    @property
+    def last_update_success(self) -> bool:
+        """Inform coordinator the last update was successful"""
+        return True
 
     @property
     def available(self) -> bool:
@@ -258,6 +277,8 @@ class ClimaxZone:
         self.update_climate_error(
             self._target_temperature - self._attr_current_temperature
         )
+
+        self._main_thermostat._async_update_temp(_current_temp)
 
     def update_pid(self):
         """Update PID signal for thermostat settemp"""
