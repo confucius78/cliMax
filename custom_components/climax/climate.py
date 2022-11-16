@@ -41,13 +41,12 @@ class ClimaxThermostat(ClimateEntity):
         self._attr_current_temperature = 20.0
         self._attr_target_temperature_entity = "logic.name"
         self._attr_hvac_action = HVACAction.OFF
-        self._attr_hvac_mode = HVACMode.AUTO
+        self._attr_hvac_mode = HVACMode.OFF
         self._attr_name = logic.name
         self._logic = logic
+        logic.set_main_thermostat(self)
         self._attr_target_temperature = self._logic.target_temperature
         self._attr_unique_id = entry_id + "thermostat"
-
-        self._logic._async_set_thermostat(self)
 
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
@@ -70,16 +69,16 @@ class ClimaxThermostat(ClimateEntity):
             return
 
         self._attr_current_temperature = float(new_state.state)
-        self._async_update_temp(new_state)
+        self.async_update_temp(new_state)
         self.async_write_ha_state()
 
     @callback
-    def _async_update_temp(self, state):
+    def async_update_temp(self, state):
         """Update thermostat with latest state from sensor."""
         try:
-            cur_temp = float(state.state)
+            cur_temp = float(state)
             if math.isnan(cur_temp) or math.isinf(cur_temp):
-                raise ValueError(f"Sensor has illegal state {state.state}")
+                raise ValueError(f"Sensor has illegal state {state}")
             self._attr_current_temperature = cur_temp
         except ValueError as ex:
             _LOGGER.error("Unable to update from sensor: %s", ex)
@@ -99,7 +98,7 @@ class ClimaxThermostat(ClimateEntity):
     @property
     def current_temperature(self) -> float:
         if self._logic.current_temperature is None:
-            return 20
+            return STATE_UNKNOWN
         else:
             return self._logic.current_temperature
 

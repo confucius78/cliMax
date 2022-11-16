@@ -174,6 +174,10 @@ class ClimaxZone:
         """set target temperature"""
         self._target_temperature = target
 
+    def set_main_thermostat(self, target):
+        """set main climate device"""
+        self._main_thermostat = target
+
     @property
     def outdoor_1d_temperature(self) -> float:
         """Return outdoor temperature"""
@@ -278,7 +282,8 @@ class ClimaxZone:
             self._target_temperature - self._attr_current_temperature
         )
 
-        self._main_thermostat._async_update_temp(_current_temp)
+        if self._main_thermostat is not None:
+            self._main_thermostat.async_update_temp(_current_temp)
 
     def update_pid(self):
         """Update PID signal for thermostat settemp"""
