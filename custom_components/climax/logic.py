@@ -10,6 +10,7 @@ from homeassistant.components.climate import (
 from homeassistant.components.recorder import get_instance, history
 from homeassistant.helpers.event import (
     async_track_time_interval,
+    async_track_state_change_event,
 )
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.const import (
@@ -74,17 +75,17 @@ class ClimaxZone:
         self._pid: float = None
         self._ac_set_temp: float = None
 
-        self._update_current_temperature(None)
+        self._async_update_current_temperature(None)
 
         # internal variables for outdoor temp monmitoring
         self._source_entity_outdoor_temperature = outdoor_temp_sensor
         self._attr_1d_outdoor_temperature = None
 
-        # async_track_state_change_event(
-        #    self._hass,
-        #    self._source_entities_current_temperature,
-        #    self._async_sensor_changed,
-        # )
+        async_track_state_change_event(
+            self._hass,
+            self._source_entities_current_temperature,
+            self._async_update_current_temperature,
+        )
 
         # async_track_state_change_event(
         #    self._hass,
@@ -92,11 +93,11 @@ class ClimaxZone:
         #    self._outside_temp_update_average,
         # )
 
-        async_track_time_interval(
-            self._hass,
-            self._update_current_temperature,
-            self._sample_time,
-        )
+        # async_track_time_interval(
+        #    self._hass,
+        #    self._update_current_temperature,
+        #    self._sample_time,
+        # )
 
         async_track_time_interval(
             self._hass,
@@ -223,14 +224,6 @@ class ClimaxZone:
     ):  # pylint: disable=unused-argument
         """Handle temperature changes."""
 
-        self._update_current_temperature(None)
-
-        _new_error = self._target_temperature - self._attr_current_temperature
-        self.update_climate_error(_new_error)
-
-        self.update_pid()
-
-    def _update_current_temperature(self, event):  # pylint: disable=unused-argument
         _current_temp = 0.0
         _max_error_index = 0
         _errors = list()
@@ -282,7 +275,7 @@ class ClimaxZone:
             self._target_temperature - self._attr_current_temperature
         )
 
-        if self._main_thermostat is not None:
+        if self._main_thermostat != STATE_UNKNOWN:
             self._main_thermostat.async_update_temp(_current_temp)
 
     def update_pid(self):

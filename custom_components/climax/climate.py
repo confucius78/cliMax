@@ -2,8 +2,6 @@
 import math
 import logging
 
-from .logic import ClimaxZone
-
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.climate import (
@@ -21,6 +19,8 @@ from homeassistant.const import (
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
+
+from .logic import ClimaxZone
 
 _LOGGER = logging.getLogger(__name__)
 
