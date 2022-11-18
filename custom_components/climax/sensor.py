@@ -16,12 +16,12 @@ from .logic import ClimaxZone
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant, entry: ConfigEntry, async_add_devices
 ) -> None:
     """Set up Climax zone thermostat based on config_entry."""
 
     logic = hass.data[DOMAIN].get(entry.entry_id)
-    await async_add_entities(
+    async_add_devices(
         [
             ZoneTempSensor(logic, entry.entry_id),
             OutdoorAverageTempSensor(logic, entry.entry_id),
@@ -29,13 +29,8 @@ async def async_setup_entry(
             ErrorTempSensor(logic, entry.entry_id),
             ErrorTempDerivativeSensor(logic, entry.entry_id),
             ErrorTempIntegralSensor(logic, entry.entry_id),
-        ],
-        update_before_add=True,
+        ]
     )
-
-
-async def setup_platform(hass: HomeAssistant, config, add_devices, discovery_info=None):
-    """Platform does not need setting up beyond having this definition"""
 
 
 class ZoneTempSensor(SensorEntity):
