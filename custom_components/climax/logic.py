@@ -50,7 +50,7 @@ class ClimaxZone:
         self._main_thermostat = None
 
         self._climate_devices = climate_ac_entities
-        self._climate_mode = HVACMode.OFF
+        self._climate_mode = HVACMode.AUTO
         self._climate_devices_action = HVACAction.OFF
 
         self._target_temperature = 20.0
@@ -87,11 +87,11 @@ class ClimaxZone:
             self._async_update_current_temperature,
         )
 
-        # async_track_state_change_event(
-        #    self._hass,
-        #    self._source_entity_outdoor_temperature,
-        #    self._outside_temp_update_average,
-        # )
+        async_track_state_change_event(
+            self._hass,
+            self._source_entity_outdoor_temperature,
+            self._outside_temp_update_average,
+        )
 
         # async_track_time_interval(
         #    self._hass,
@@ -99,23 +99,23 @@ class ClimaxZone:
         #    self._sample_time,
         # )
 
-        async_track_time_interval(
-            self._hass,
-            self._outside_temp_update_average,
-            self._sample_time,
-        )
+        # async_track_time_interval(
+        #    self._hass,
+        #    self._outside_temp_update_average,
+        #    self._sample_time,
+        # )
 
-        async_track_time_interval(
-            self._hass,
-            self._update_climate_state,
-            self._sample_time,
-        )
+        # async_track_time_interval(
+        #    self._hass,
+        #    self._update_climate_state,
+        #    self._sample_time,
+        # )
 
-        async_track_time_interval(
-            self._hass,
-            self._update_climate_mode,
-            self._sample_time,
-        )
+        # async_track_time_interval(
+        #    self._hass,
+        #    self._update_climate_mode,
+        #    self._sample_time,
+        # )
 
         async_track_time_interval(
             self._hass,

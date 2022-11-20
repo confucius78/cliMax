@@ -7,9 +7,8 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import TEMP_CELSIUS
+from homeassistant.const import TEMP_CELSIUS, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .logic import ClimaxZone
@@ -41,29 +40,39 @@ class ZoneTempSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _logic = None
-    _precision = None
-    _dropped_entities = list()
+    _attr_native_value = STATE_UNAVAILABLE
+    _attr_precision = STATE_UNAVAILABLE
+    _attr_dropped_entities = STATE_UNAVAILABLE
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
 
         This is the only method that should fetch new data for Home Assistant.
         """
+        # check valid state, else provide unavailable
         if self._logic.current_temperature is not None:
             self._attr_native_value = self._logic.current_temperature
         else:
-            self._attr_native_value = None
+            self._attr_native_value = STATE_UNAVAILABLE
+
+        # check valid state, else provide unavailable
         if self._logic.precision is not None:
-            self._precision = self._logic.precision
+            self._attr_precision = round(self._logic.precision)
         else:
-            self._precision = None
-        self._dropped_entities = self._logic.dropped_entities
+            self._attr_precision = STATE_UNAVAILABLE
+
+        # check valid state, else provide unavailable
+        if self._logic.dropped_entities is not None:
+            self._attr_dropped_entities = self._logic.dropped_entities
+        else:
+            self._attr_dropped_entities = STATE_UNAVAILABLE
 
     def __init__(self, logic: ClimaxZone, entry_id):
         """Initialize the sensor."""
         self._attr_name = logic.name + " zone temperature"
         self._attr_unique_id = entry_id + "_zone_temp"
         self._logic = logic
+
         # self._attr_state = logic.current_temperature
 
     @property
@@ -71,8 +80,8 @@ class ZoneTempSensor(SensorEntity):
         """Return the state attributes of the sensor."""
 
         return {
-            "Precision": round(self._precision, 3),
-            "Dropped entities": self._dropped_entities,
+            "Precision": self._attr_precision,
+            "Dropped entities": self._attr_dropped_entities,
         }
 
 
@@ -84,21 +93,23 @@ class OutdoorAverageTempSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _logic = None
-    _precision = None
-    _dropped_entities = list()
+    _attr_native_value = STATE_UNAVAILABLE
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._attr_native_value = self._logic.outdoor_1d_temperature
+        # check valid state, else provide unavailable
+        if self._logic.outdoor_1d_temperature is not None:
+            self._attr_native_value = self._logic.outdoor_1d_temperature
+        else:
+            self._attr_native_value = STATE_UNAVAILABLE
 
     def __init__(self, logic: ClimaxZone, entry_id):
         """Initialize the sensor."""
         self._attr_name = logic.name + " zone outside 1d average temperature"
         self._logic = logic
-        self._attr_native_value = self._logic.outdoor_1d_temperature
         self._attr_unique_id = entry_id + "_outdoor_1d_temp"
 
 
@@ -110,19 +121,23 @@ class TargetTempSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _logic = None
+    _attr_native_value = STATE_UNAVAILABLE
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._attr_native_value = self._logic.target_temperature
+        # check valid state, else provide unavailable
+        if self._logic.target_temperature is not None:
+            self._attr_native_value = self._logic.target_temperature
+        else:
+            self._attr_native_value = STATE_UNAVAILABLE
 
     def __init__(self, logic: ClimaxZone, entry_id):
         """Initialize the sensor."""
         self._attr_name = logic.name + " zone target temperature"
         self._logic = logic
-        self._attr_native_value = self._logic.target_temperature
         self._attr_unique_id = entry_id + "_zone_tgt_temp"
 
 
@@ -134,20 +149,23 @@ class ErrorTempSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _logic = None
+    _attr_native_value = STATE_UNAVAILABLE
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._attr_native_value = self._logic.climate_error
+        # check valid state, else provide unavailable
+        if self._logic.climate_error is not None:
+            self._attr_native_value = self._logic.climate_error
+        else:
+            self._attr_native_value = STATE_UNAVAILABLE
 
     def __init__(self, logic: ClimaxZone, entry_id):
         """Initialize the sensor."""
         self._attr_name = logic.name + " zone error temperature"
-
         self._logic = logic
-        self._attr_native_value = self._logic.climate_error
         self._attr_unique_id = entry_id + "_zone_error_temp"
 
 
@@ -159,19 +177,23 @@ class ErrorTempDerivativeSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _logic = None
+    _attr_native_value = STATE_UNAVAILABLE
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._attr_native_value = self._logic.climate_error_derivative
+        # check valid state, else provide unavailable
+        if self._logic.climate_error_derivative is not None:
+            self._attr_native_value = self._logic.climate_error_derivative
+        else:
+            self._attr_native_value = STATE_UNAVAILABLE
 
     def __init__(self, logic: ClimaxZone, entry_id):
         """Initialize the sensor."""
         self._attr_name = logic.name + " zone error derivative temperature"
         self._logic = logic
-        self._attr_native_value = self._logic.climate_error_derivative
         self._attr_unique_id = entry_id + "_zone_error_temp_derivative"
 
 
@@ -183,17 +205,21 @@ class ErrorTempIntegralSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _logic = None
+    _attr_native_value = STATE_UNAVAILABLE
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._attr_native_value = self._logic.climate_error_integral
+        # check valid state, else provide unavailable
+        if self._logic.climate_error_integral is not None:
+            self._attr_native_value = self._logic.climate_error_integral
+        else:
+            self._attr_native_value = STATE_UNAVAILABLE
 
     def __init__(self, logic: ClimaxZone, entry_id):
         """Initialize the sensor."""
         self._attr_name = logic.name + " zone error integral temperature"
         self._logic = logic
-        self._attr_native_value = self._logic.climate_error_integral
         self._attr_unique_id = entry_id + "_zone_error_temp_integral"
